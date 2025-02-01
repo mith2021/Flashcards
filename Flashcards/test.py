@@ -41,96 +41,77 @@ class FlashcardsApp:
         self.answer_entry = tk.Entry(self.input_frame, width=30, font=("Helvetica", 12), relief="solid", bd=1, bg="#3C3F41", fg="#FFFFFF", insertbackground="#FFFFFF")
         self.answer_entry.grid(row=1, column=1, pady=5)
 
-        self.add_button = tk.Button(root, text="Add Flashcard", command= lambda: [self.add_flashcard()], bg="#FF9800", fg="#FFFFFF", font=("Helvetica", 12), relief="flat", padx=10, pady=5)
+        self.add_button = tk.Button(root, text="Add Flashcard", command=self.add_flashcard, bg="#FF9800", fg="#FFFFFF", font=("Helvetica", 12), relief="flat", padx=10, pady=5)
         self.add_button.pack(pady=10)
 
         # Flashcards storage
         self.flashcards = []
-        self.flashcard_questions = []
         self.current_index = -1
 
-        self.list_title = tk.Label(root, text="List Of Flashcards: select to edit", bg="#FF9800", fg="#FFFFFF", font=("Helvetica", 12), relief="flat", padx=10, pady=5)
+        # Flashcard selection list
+        self.list_title = tk.Label(root, text="List Of Flashcards: select to edit", bg="#2B2B2B", fg="#FFFFFF", font=("Helvetica", 12))
         self.list_title.pack()
 
         self.selected_option = tk.StringVar(root)
         self.selected_option.set("No Flashcards")
 
-        self.menu = tk.OptionMenu(root, self.selected_option, "No Flashcards")
+        self.menu = tk.OptionMenu(root, self.selected_option, "No Flashcards", command=self.select_flashcard)
         self.menu.pack(pady=20)
 
-    #update flashcards list 
     def update_flashcards_list(self):
-        menu = self.menu['menu']
-        menu.delete(0,'end')
+        """Updates the dropdown list with new flashcards."""
+        menu = self.menu["menu"]
+        menu.delete(0, "end")  # Clear the current options
 
         if self.flashcards:
             for flashcard in self.flashcards:
-                flashcard_index = self.flashcards.index(flashcard)
-                menu.add_command(label=flashcard["Question"], command=lambda q=flashcard["Question"]: self.select_flashcard(q, flashcard_index))
+                menu.add_command(label=flashcard["Question"], command=lambda q=flashcard["Question"]: self.selected_option.set(q))
             self.selected_option.set(self.flashcards[-1]["Question"])  # Set last added as default
         else:
             self.selected_option.set("No Flashcards")
             menu.add_command(label="No Flashcards", command=lambda: self.selected_option.set("No Flashcards"))
 
     def add_flashcard(self):
+        """Adds a flashcard and updates the dropdown list."""
         question = self.question_entry.get()
         answer = self.answer_entry.get()
         if question and answer:
             self.flashcards.append({"Question": question, "Answer": answer})
             self.flashcard_label.config(text=f"Question: {question}")
-            self.next_card()
 
-            self.question_entry.delete(0, tk.END)  # Clears the question entry
-            self.answer_entry.delete(0, tk.END)    # Clears the answer entry
+            self.question_entry.delete(0, tk.END)  # Clear the entry
+            self.answer_entry.delete(0, tk.END)
 
-            self.update_flashcards_list()
+            self.update_flashcards_list()  # Refresh dropdown list
         else:
             messagebox.showwarning("Input Error", "Please enter both question and answer")
-            
-    #select flashcard
-    def select_flashcard(self, q, flashcard_index):
-        self.selected_option.set(q)
-        
-        self.flashcard_label.config(text=f"Edit Question: {q}")
 
-        self.question_entry.delete(0, tk.END) 
-        self.answer_entry.delete(0, tk.END)  
+    def select_flashcard(self, selected_question):
+        """Displays the selected flashcard."""
+        for index, flashcard in enumerate(self.flashcards):
+            if flashcard["Question"] == selected_question:
+                self.current_index = index
+                self.flashcard_label.config(text=f"Question: {flashcard['Question']}")
+                break
 
-        self.question_entry.insert(0, self.flashcards[flashcard_index]["Question"]) 
-        self.answer_entry.insert(0, self.flashcards[flashcard_index]["Answer"]) 
-        
-        def update_flashcard(flashcard_index):
-            updated_question = self.question_entry.get()
-            updated_ans = self.answer_entry.get()
-
-            if updated_question and updated_ans:
-                self.flashcards[flashcard_index] = {"Question": updated_question, "Answer": updated_ans}
-                self.selected_option.set(updated_question)
-                
-                self.update_flashcards_list()
-            else:
-                messagebox.showwarning("Input Error", "Please enter both question and answer")
-
-        update_button = tk.Button(self.root, text="Update Flashcard", command=update_flashcard(flashcard_index), bg="#FF9800", fg="#FFFFFF", font=("Helvetica", 12), relief="flat", padx=10, pady=5)
-        update_button.pack(pady=10)
-        
     def show_answer(self):
+        """Reveals the answer to the current flashcard."""
         if self.current_index != -1:
             ans = self.flashcards[self.current_index]["Answer"]
             self.flashcard_label.config(text=f"Answer: {ans}")
 
     def next_card(self):
-        self.current_index += 1 
+        """Displays the next flashcard."""
+        self.current_index += 1
         if len(self.flashcards) <= self.current_index:
             self.current_index = 0
         if self.flashcards:
             question = self.flashcards[self.current_index]["Question"]
-            self.flashcard_label.config(text=f"{question}")
-        else: 
+            self.flashcard_label.config(text=f"Question: {question}")
+        else:
             self.flashcard_label.config(text="No Flashcards available.")
-        
+
 if __name__ == "__main__":
     root = tk.Tk()
     app = FlashcardsApp(root)
     root.mainloop()
-
